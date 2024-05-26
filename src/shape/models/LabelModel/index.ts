@@ -95,22 +95,28 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
    * This function rescales the text node and label node
    * to avoid from stretching that
    */
-  private transform() {
-    if (
-      this.config.keepScale === false ||
-      this.board.selection.transformer.getActiveAnchor() === 'rotater'
-    ) {
-      return
-    }
+	private transform() {
+	  if (
+		this.config.keepScale === false ||
+		this.board.selection.transformer.getActiveAnchor() === 'rotater'
+	  ) {
+		return
+	  }
+	  if (
+		this.board.selection.transformer.getActiveAnchor() === 'middle-left' ||
+		this.board.selection.transformer.getActiveAnchor() === 'middle-right'
+	  ) {
+		console.log(this.board.selection.transformer.getActiveAnchor())
+		this.textNode.setAttrs({
+		  width: Math.max(this.node.width() * this.node.scaleX(), 30),
+		  scaleX: this.node.scaleY(),
+		  wrap: 'word'
+		})
 
-    this.textNode.setAttrs({
-      width: this.node.width() * this.node.scaleX(),
-      scaleX: this.node.scaleY()
-    })
-
-    this.node.scaleX(this.textNode.scaleY())
-    this.tagNode.scaleX(this.node.scaleY())
-  }
+		this.node.scaleX(this.textNode.scaleY())
+		this.tagNode.scaleX(this.node.scaleY())
+	  }
+	}
 
   /**
    * Enables inline editing of the label with double clicking on the node
@@ -159,7 +165,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
       maxWidth: `${this.textNode.width() * this.node.scaleX()}px`,
       minHeight: `${this.textNode.height() * this.node.scaleY()}px`,
       fontSize: `${this.textNode.fontSize() * this.node.scaleY()}px`,
-      border: 'none',
+      border: `2px solid #ffffff`,
       padding: `${this.textNode.padding()}px`,
       margin: `${this.textNode.padding()}px`,
       overflow: 'hidden',
