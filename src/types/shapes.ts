@@ -46,6 +46,9 @@ export declare interface LabelConfig extends ShapeConfig {
   keepScale?: boolean
 }
 
+export declare interface TextPathConfig extends ShapeConfig {
+}
+
 export declare type RegisterShapesFn<T> = (
   board: Board
 ) => Omit<T, keyof BaseShapes>

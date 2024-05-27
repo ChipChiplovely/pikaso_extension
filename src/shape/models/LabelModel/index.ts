@@ -1,12 +1,12 @@
 import Konva from 'konva'
 
-import { convertHtmlToText } from '../../../utils/html-to-text'
+import {convertHtmlToText} from '../../../utils/html-to-text'
 
-import { Board } from '../../../Board'
-import { ShapeModel } from '../../ShapeModel'
-import { isBrowser, isNode } from '../../../utils/detect-environment'
-import { rotateAroundCenter } from '../../../utils/rotate-around-center'
-import { DrawType, LabelConfig } from '../../../types'
+import {Board} from '../../../Board'
+import {ShapeModel} from '../../ShapeModel'
+import {isBrowser, isNode} from '../../../utils/detect-environment'
+import {rotateAroundCenter} from '../../../utils/rotate-around-center'
+import {DrawType, LabelConfig} from '../../../types'
 
 export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
   /**
@@ -19,11 +19,16 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
    */
   private isEditingEnabled = false
 
+  /**
+   * add more original text no format
+   */
+  private orgText: string
+
   constructor(board: Board, node: Konva.Label, config: LabelConfig = {}) {
     super(board, node, config)
 
     this.config = config
-
+    this.orgText = node.getText().text()
     node.on('transform', this.transform.bind(this))
     node.on('dblclick', this.inlineEdit.bind(this))
   }
@@ -54,6 +59,21 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
    */
   public get tagNode() {
     return this.node.getTag() as Konva.Tag
+  }
+
+  /**
+   * Returns the original content of Text
+   */
+  public getOrgText() {
+    return this.orgText
+  }
+
+  /**
+   * Set Content to origin text
+   * @param orgText
+   */
+  public setOrgText(orgText: string) {
+    this.orgText = orgText
   }
 
   /**
@@ -95,28 +115,27 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
    * This function rescales the text node and label node
    * to avoid from stretching that
    */
-	private transform() {
-	  if (
-		this.config.keepScale === false ||
-		this.board.selection.transformer.getActiveAnchor() === 'rotater'
-	  ) {
-		return
-	  }
-	  if (
-		this.board.selection.transformer.getActiveAnchor() === 'middle-left' ||
-		this.board.selection.transformer.getActiveAnchor() === 'middle-right'
-	  ) {
-		console.log(this.board.selection.transformer.getActiveAnchor())
-		this.textNode.setAttrs({
-		  width: Math.max(this.node.width() * this.node.scaleX(), 30),
-		  scaleX: this.node.scaleY(),
-		  wrap: 'word'
-		})
+  private transform() {
+    if (
+      this.config.keepScale === false ||
+      this.board.selection.transformer.getActiveAnchor() === 'rotater'
+    ) {
+      return
+    }
+    if (
+      this.board.selection.transformer.getActiveAnchor() === 'middle-left' ||
+      this.board.selection.transformer.getActiveAnchor() === 'middle-right'
+    ) {
+      this.textNode.setAttrs({
+        width: Math.max(this.node.width() * this.node.scaleX(), 30),
+        scaleX: this.node.scaleY(),
+        wrap: 'word'
+      })
 
-		this.node.scaleX(this.textNode.scaleY())
-		this.tagNode.scaleX(this.node.scaleY())
-	  }
-	}
+      this.node.scaleX(this.textNode.scaleY())
+      this.tagNode.scaleX(this.node.scaleY())
+    }
+  }
 
   /**
    * Enables inline editing of the label with double clicking on the node
@@ -136,7 +155,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     const textBeforeEdit = this.textNode.getAttr('text')
 
     // hide node
-    this.node.hide()
+    // this.node.hide()
     this.node?.draggable(false)
 
     // deselect all selected nodes
@@ -155,30 +174,27 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     input.setAttribute('role', 'textbox')
     input.innerText = this.textNode.getAttr('text')
 
+    let left = (position.x - this.textNode.padding()) + (this.textNode.width() * this.node.scaleX() - 188) / 2
+    let bottom = this.board.stage.height() - (position.y - 20)
     Object.assign(input.style, {
       position: 'absolute',
       display: 'inline-block',
-      left: `${position.x - this.textNode.padding()}px`,
-      top: `${position.y - this.textNode.padding()}px`,
-      width: `${this.textNode.width() * this.node.scaleX()}px`,
-      minWidth: `${this.textNode.padding() * 2}px`,
-      maxWidth: `${this.textNode.width() * this.node.scaleX()}px`,
-      minHeight: `${this.textNode.height() * this.node.scaleY()}px`,
-      fontSize: `${this.textNode.fontSize() * this.node.scaleY()}px`,
-      border: `2px solid #ffffff`,
-      padding: `${this.textNode.padding()}px`,
-      margin: `${this.textNode.padding()}px`,
-      overflow: 'hidden',
-      background: this.tagNode.fill(),
-      borderRadius: `${this.tagNode.cornerRadius()}px`,
+      left: `${left}px`,
+      bottom: `${bottom}px`,
+      width: `168px`,
+      maxHeight: `90px`,
+      fontSize: `16px`,
+      border: 'none',
+      padding: `10px`,
+      margin: `0px`,
+      overflow: 'auto',
+      background: 'rgba(0,0,0,0.85)',
+      borderRadius: `10px`,
       outline: 'none',
       resize: 'none',
-      lineHeight: this.textNode.lineHeight(),
-      fontFamily: this.textNode.fontFamily(),
       transformOrigin: 'left top',
       textAlign: this.textNode.align(),
-      color: this.textNode.fill(),
-      transform: `${input.style.transform} rotateZ(${this.node.rotation()}deg)`
+      color: '#fff'
     })
 
     input.addEventListener('blur', (e: Event) => {
@@ -200,7 +216,9 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
       // update label's text
       this.textNode.setText(newText)
 
-      this.node.show()
+      // update original text
+      this.setOrgText(newText)
+      // this.node.show()
       this.node.setAttrs({
         draggable: this.board.settings.selection?.interactive,
         width: this.textNode.width()
