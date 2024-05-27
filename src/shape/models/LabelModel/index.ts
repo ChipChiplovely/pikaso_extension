@@ -198,6 +198,10 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
       color: '#fff'
     })
 
+    if (isBrowser()) {
+      input.addEventListener('keyup', this.onKeyUp.bind(this))
+    }
+
     input.addEventListener('blur', (e: Event) => {
       this.isEditingEnabled = false
 
@@ -274,5 +278,31 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     const selection = window.getSelection()!
     selection.removeAllRanges()
     selection.addRange(range)
+  }
+
+  /**
+   * Handles global keyboard events
+   *
+   * @param e The keyboard event
+   */
+  private onKeyUp(
+    e: Event & {
+      key: string
+      metaKey: boolean
+      ctrlKey: boolean
+      shiftKey: boolean
+    }
+  ) {
+    // const isSpecialKey = e.metaKey || e.ctrlKey
+    // const isShiftKey = e.shiftKey === true
+    // const key = e.key.toLowerCase()
+    // @ts-ignore
+    const newText = convertHtmlToText((<HTMLSpanElement>e.target).innerHTML)
+    this.board.events.emit('textPath:update-text', {
+      shapes: [this],
+      data: {
+        text: newText
+      }
+    })
   }
 }
