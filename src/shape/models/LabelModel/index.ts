@@ -172,7 +172,8 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
 
     input.setAttribute('contenteditable', '')
     input.setAttribute('role', 'textbox')
-    input.innerText = this.textNode.getAttr('text')
+    // input.innerText = this.textNode.getAttr('text')
+    input.innerText = this.getOrgText()
 
     let left = (position.x - this.textNode.padding()) + (this.textNode.width() * this.node.scaleX() - 188) / 2
     let bottom = this.board.stage.height() - (position.y - 20)
