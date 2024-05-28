@@ -161,7 +161,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     // deselect all selected nodes
     this.board.selection.deselectAll()
 
-    const input = document.createElement('textarea')
+    const input = document.createElement('span')
     this.board.container
       ?.getElementsByClassName(this.board.settings.containerClassName!)[0]
       ?.append(input)
@@ -214,9 +214,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
 
       this.board.setActiveDrawing(null)
 
-      const newText = convertHtmlToText(
-        (<HTMLTextAreaElement>e.target).value
-      )
+      const newText = convertHtmlToText((<HTMLSpanElement>e.target).innerHTML)
       console.log('newText', newText)
       if (newText !== textBeforeEdit) {
         this.board.history.create(this.board.layer, [], {
@@ -275,7 +273,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
    *
    * @param input The [[HTMLSpanElement]]
    */
-  private async setInputFocus(input: HTMLTextAreaElement) {
+  private async setInputFocus(input: HTMLSpanElement) {
     await new Promise(resolve => setTimeout(resolve, 50))
 
     const range = document.createRange()
@@ -304,7 +302,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     // const isShiftKey = e.shiftKey === true
     // const key = e.key.toLowerCase()
     // @ts-ignore
-    const newText = convertHtmlToText((<HTMLTextAreaElement>e.target).innerHTML)
+    const newText = convertHtmlToText((<HTMLSpanElement>e.target).innerHTML)
     this.board.events.emit('label:update-text', {
       shapes: [this],
       data: {
