@@ -147,11 +147,11 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
       return
     }
 
-    e.cancelBubble = true
+    // e.cancelBubble = true
     this.isEditingEnabled = true
     this.board.setActiveDrawing(DrawType.Text)
 
-    const position = e.target.absolutePosition()
+    // const position = e.target.absolutePosition()
     const textBeforeEdit = this.textNode.getAttr('text')
 
     // hide node
@@ -161,7 +161,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     // deselect all selected nodes
     this.board.selection.deselectAll()
 
-    const input = document.createElement('span')
+    const input = document.createElement('textarea')
     this.board.container
       ?.getElementsByClassName(this.board.settings.containerClassName!)[0]
       ?.append(input)
@@ -175,13 +175,18 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     // input.innerText = this.textNode.getAttr('text')
     input.innerText = this.getOrgText()
 
-    let left = (position.x - this.textNode.padding()) + (this.textNode.width() * this.node.scaleX() - 188) / 2
-    let bottom = this.board.stage.height() - (position.y - 20)
+    // Fix position by relation position of label
+    // let left = (position.x - this.textNode.padding()) + (this.textNode.width() * this.node.scaleX() - 188) / 2
+    // let bottom = this.board.stage.height() - (position.y - 20)
+
+    let left = (this.board.stage.width() - 188) / 2
+    let top = this.board.stage.y()
+
     Object.assign(input.style, {
       position: 'absolute',
       display: 'inline-block',
       left: `${left}px`,
-      bottom: `${bottom}px`,
+      top: `${top}px`,
       width: `168px`,
       maxHeight: `90px`,
       fontSize: `16px`,
@@ -209,8 +214,10 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
 
       this.board.setActiveDrawing(null)
 
-      const newText = convertHtmlToText((<HTMLSpanElement>e.target).innerHTML)
-
+      const newText = convertHtmlToText(
+        (<HTMLTextAreaElement>e.target).value
+      )
+      console.log('newText', newText)
       if (newText !== textBeforeEdit) {
         this.board.history.create(this.board.layer, [], {
           undo: () => this.changeText(textBeforeEdit),
@@ -268,7 +275,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
    *
    * @param input The [[HTMLSpanElement]]
    */
-  private async setInputFocus(input: HTMLSpanElement) {
+  private async setInputFocus(input: HTMLTextAreaElement) {
     await new Promise(resolve => setTimeout(resolve, 50))
 
     const range = document.createRange()
@@ -297,8 +304,8 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     // const isShiftKey = e.shiftKey === true
     // const key = e.key.toLowerCase()
     // @ts-ignore
-    const newText = convertHtmlToText((<HTMLSpanElement>e.target).innerHTML)
-    this.board.events.emit('textPath:update-text', {
+    const newText = convertHtmlToText((<HTMLTextAreaElement>e.target).innerHTML)
+    this.board.events.emit('label:update-text', {
       shapes: [this],
       data: {
         text: newText

@@ -74,7 +74,7 @@ export class TextPathModel extends ShapeModel<Konva.TextPath, Konva.TextPathConf
     // deselect all selected nodes
     this.board.selection.deselectAll()
 
-    const input = document.createElement('span')
+    const input = document.createElement('textarea')
     this.board.container
       ?.getElementsByClassName(this.board.settings.containerClassName!)[0]
       ?.append(input)
@@ -85,15 +85,17 @@ export class TextPathModel extends ShapeModel<Konva.TextPath, Konva.TextPathConf
 
     input.setAttribute('contenteditable', '')
     input.setAttribute('role', 'textbox')
-    const box = this.node.getClientRect()
+    // const box = this.node.getClientRect()
     input.innerText = this.node.getAttr('text')
-    let left = box.x + (box.width - 188) / 2
-    let bottom = this.board.stage.height() - (box.y - 20)
+    // let left = box.x + (box.width - 188) / 2
+    // let bottom = this.board.stage.height() - (box.y - 20)
+    let left = (this.board.stage.width() - 188) / 2
+    let top = this.board.stage.y()
     Object.assign(input.style, {
       position: 'absolute',
       display: 'inline-block',
       left: `${left}px`,
-      bottom: `${bottom}px`,
+      top: `${top}px`,
       width: `168px`,
       maxHeight: `90px`,
       fontSize: `16px`,
@@ -118,7 +120,7 @@ export class TextPathModel extends ShapeModel<Konva.TextPath, Konva.TextPathConf
 
       this.board.setActiveDrawing(null)
 
-      const newText = convertHtmlToText((<HTMLSpanElement>e.target).innerHTML)
+      const newText = convertHtmlToText((<HTMLTextAreaElement>e.target).value)
 
       if (newText !== textBeforeEdit) {
         this.board.history.create(this.board.layer, [], {
@@ -161,7 +163,7 @@ export class TextPathModel extends ShapeModel<Konva.TextPath, Konva.TextPathConf
    *
    * @param input The [[HTMLSpanElement]]
    */
-  private async setInputFocus(input: HTMLSpanElement) {
+  private async setInputFocus(input: HTMLTextAreaElement) {
     await new Promise(resolve => setTimeout(resolve, 50))
 
     const range = document.createRange()
@@ -190,7 +192,7 @@ export class TextPathModel extends ShapeModel<Konva.TextPath, Konva.TextPathConf
     // const isShiftKey = e.shiftKey === true
     // const key = e.key.toLowerCase()
     // @ts-ignore
-    const newText = convertHtmlToText((<HTMLSpanElement>e.target).innerHTML)
+    const newText = convertHtmlToText((<HTMLTextAreaElement>e.target).value)
     this.board.events.emit('textPath:update-text', {
       shapes: [this],
       data: {
