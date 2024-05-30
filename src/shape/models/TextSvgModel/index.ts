@@ -1,64 +1,51 @@
 import Konva from 'konva'
 
 import {convertHtmlToText} from '../../../utils/html-to-text'
-
 import {Board} from '../../../Board'
-import {ShapeModel} from '../../ShapeModel'
 import {isBrowser, isNode} from '../../../utils/detect-environment'
 import {rotateAroundCenter} from '../../../utils/rotate-around-center'
-import {DrawType, LabelConfig} from '../../../types'
+import {ShapeModel} from '../../ShapeModel'
+import {DrawType, TextPathConfig} from '../../../types'
 
-export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
-  /**
-   * The configurations of the label
-   */
-  public config: LabelConfig
-
-  /**
-   * Represents whether the label is editing (inline edit) or not
-   */
-  private isEditingEnabled = false
-
+export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
   /**
    * add more original text no format
    */
   private orgText: string
 
-  constructor(board: Board, node: Konva.Label, config: LabelConfig = {}) {
+  constructor(board: Board, node: Konva.Group, config: TextPathConfig = {}) {
     super(board, node, config)
 
     this.config = config
-    // this.orgText = node.getText().text()
-    node.on('transform', this.transform.bind(this))
     node.on('dblclick', this.inlineEdit.bind(this))
+    node.find('TextPath')[0].on('dataChange', this.sync.bind(this))
+    node.find('TextPath')[0].on('fontFamilyChange', this.sync.bind(this))
+    node.find('TextPath')[0].on('fontSizeChange', this.sync.bind(this))
+    node.find('TextPath')[0].on('textChange', this.sync.bind(this))
+    node.find('TextPath')[0].on('letterSpacingChange', this.sync.bind(this))
+    node.find('TextPath')[0].on('alignChange', this.sync.bind(this))
+    this._sync()
   }
 
   /**
    * @inheritdoc
    */
   public get type(): string {
-    return 'label'
-  }
-
-  /**
-   * Returns the label is in inline editing mode or not
-   */
-  public get isEditing() {
-    return this.isEditingEnabled
+    return 'textSvg'
   }
 
   /**
    * Returns the text node of the label
    */
-  public get textNode() {
-    return this.node.getText() as Konva.Text
+  public get textPathNode() {
+    return this.node.find('TextPath')[0] as Konva.TextPath
   }
 
   /**
    * Returns the tag node of the label
    */
   public get tagNode() {
-    return this.node.getTag() as Konva.Tag
+    return this.node.find('Tag')[0] as Konva.Tag
   }
 
   /**
@@ -89,55 +76,6 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
   }
 
   /**
-   * Updates attributes of the label's tag
-   *
-   * @param attributes The list of attributes
-   */
-  public updateTag(attributes: Partial<Konva.TagConfig>) {
-    this.board.history.create(this.board.layer, this.tagNode)
-    this.tagNode.setAttrs(attributes)
-  }
-
-  /**
-   * Updates attributes of the label's tag
-   *
-   * @param attributes The list of attributes
-   */
-  public updateText(attributes: Partial<Konva.TextConfig>) {
-    this.board.history.create(this.board.layer, this.textNode)
-    this.textNode.setAttrs(attributes)
-
-    this.updateTransformer()
-  }
-
-  /**
-   * Controls transforming the label
-   * This function rescales the text node and label node
-   * to avoid from stretching that
-   */
-  private transform() {
-    if (
-      this.config.keepScale === false ||
-      this.board.selection.transformer.getActiveAnchor() === 'rotater'
-    ) {
-      return
-    }
-    if (
-      this.board.selection.transformer.getActiveAnchor() === 'middle-left' ||
-      this.board.selection.transformer.getActiveAnchor() === 'middle-right'
-    ) {
-      this.textNode.setAttrs({
-        width: Math.max(this.node.width() * this.node.scaleX(), 30),
-        scaleX: this.node.scaleY(),
-        wrap: 'word'
-      })
-
-      this.node.scaleX(this.textNode.scaleY())
-      this.tagNode.scaleX(this.node.scaleY())
-    }
-  }
-
-  /**
    * Enables inline editing of the label with double clicking on the node
    *
    * @param e The [[MouseEvent | Mouse Event]
@@ -148,12 +86,10 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     }
 
     e.cancelBubble = true
-    this.isEditingEnabled = true
-    this.board.setActiveDrawing(DrawType.Text)
+    this.board.setActiveDrawing(DrawType.TextPath)
 
-    // const position = e.target.absolutePosition()
-    const textBeforeEdit = this.textNode.getAttr('text')
-
+    const textBeforeEdit = this.textPathNode.getAttr('text')
+    console.log('textBeforeEdit', textBeforeEdit)
     // hide node
     // this.node.hide()
     this.node?.draggable(false)
@@ -172,16 +108,12 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
 
     input.setAttribute('contenteditable', '')
     input.setAttribute('role', 'textbox')
-    // input.innerText = this.textNode.getAttr('text')
-    input.innerText = this.getOrgText()
-
-    // Fix position by relation position of label
-    // let left = (position.x - this.textNode.padding()) + (this.textNode.width() * this.node.scaleX() - 188) / 2
-    // let bottom = this.board.stage.height() - (position.y - 20)
-
+    // const box = this.node.getClientRect()
+    input.innerText = this.textPathNode.getAttr('text')
+    // let left = box.x + (box.width - 188) / 2
+    // let bottom = this.board.stage.height() - (box.y - 20)
     let left = (this.board.stage.width() - 188) / 2
     let top = this.board.stage.y()
-
     Object.assign(input.style, {
       position: 'absolute',
       display: 'inline-block',
@@ -199,23 +131,20 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
       outline: 'none',
       resize: 'none',
       transformOrigin: 'left top',
-      textAlign: this.textNode.align(),
+      textAlign: this.textPathNode.getAttr('align'),
       color: '#fff'
     })
-
     if (isBrowser()) {
       input.addEventListener('keyup', this.onKeyUp.bind(this))
     }
 
     input.addEventListener('blur', (e: Event) => {
-      this.isEditingEnabled = false
-
       input.parentNode?.removeChild(input)
 
       this.board.setActiveDrawing(null)
 
       const newText = convertHtmlToText((<HTMLSpanElement>e.target).innerHTML)
-      console.log('newText', newText)
+
       if (newText !== textBeforeEdit) {
         this.board.history.create(this.board.layer, [], {
           undo: () => this.changeText(textBeforeEdit),
@@ -224,14 +153,14 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
       }
 
       // update label's text
-      this.textNode.setText(newText)
-
+      // this.node.text(newText)
       // update original text
       this.setOrgText(newText)
       // this.node.show()
-      this.node.setAttrs({
+
+      this.textPathNode.setAttrs({
         draggable: this.board.settings.selection?.interactive,
-        width: this.textNode.width()
+        text: newText
       })
 
       // select node
@@ -245,27 +174,12 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
    * @param value The text value
    */
   private changeText(value: string) {
-    this.textNode.setAttrs({
-      text: value
-    })
-
-    this.updateTransformer()
-
-    this.board.events.emit('label:update-text', {
+    this.board.events.emit('textPath:update-text', {
       shapes: [this],
       data: {
         text: value
       }
     })
-  }
-
-  /**
-   * updates transformer after changing text
-   */
-  private updateTransformer() {
-    if (this.board.selection.isVisible) {
-      this.board.selection.transformer.forceUpdate()
-    }
   }
 
   /**
@@ -303,11 +217,60 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     // const key = e.key.toLowerCase()
     // @ts-ignore
     const newText = convertHtmlToText((<HTMLSpanElement>e.target).innerHTML)
-    this.board.events.emit('label:update-text', {
+    this.board.events.emit('textPath:update-text', {
       shapes: [this],
       data: {
         text: newText
       }
     })
+  }
+
+  public getWidth() {
+    return this.textPathNode.width()
+  }
+
+  public getHeight() {
+    return this.textPathNode.height()
+  }
+
+  public getFontSize(): number {
+    const node = this.textPathNode
+    const scale = node.getAbsoluteScale()
+    let fontSize = Math.ceil(node.fontSize() * scale.x)
+    return fontSize
+  }
+
+  public updateText(attributes: Partial<Konva.TextPathConfig>) {
+    this.board.history.create(this.board.layer, this.textPathNode)
+    this.textPathNode.setAttrs(attributes)
+
+    this.updateTransformer()
+  }
+
+  private _sync() {
+    let textPath = this.textPathNode
+    let tag = this.tagNode
+    if (textPath && tag) {
+      const rect = textPath.getSelfRect()
+      tag.setAttrs({
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height
+      })
+    }
+  }
+
+  /**
+   * updates transformer after changing text
+   */
+  private updateTransformer() {
+    if (this.board.selection.isVisible) {
+      this.board.selection.transformer.forceUpdate()
+    }
+  }
+  private sync(e: Konva.KonvaEventObject<MouseEvent>) {
+    this._sync()
+    this.updateTransformer()
   }
 }

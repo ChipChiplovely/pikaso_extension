@@ -16,6 +16,7 @@ import { Selection } from './Selection'
 import { SvgDrawer } from './shape/drawers/SvgDrawer'
 import { TextDrawer } from './shape/drawers/TextDrawer'
 import { TextPathDrawer } from './shape/drawers/TextPathDrawer'
+import { TextSvgDrawer } from './shape/drawers/TextSvgDrawer'
 import { LineDrawer } from './shape/drawers/LineDrawer'
 import { RectDrawer } from './shape/drawers/RectDrawer'
 import { ArrowDrawer } from './shape/drawers/ArrowDrawer'
@@ -271,12 +272,13 @@ export default class Pikaso<Shapes extends BaseShapes = BaseShapes> {
       pencil: new PencilDrawer(board),
       polygon: new PolygonDrawer(board),
       rect: new RectDrawer(board),
-      triangle: new TriangleDrawer(board),
+      svg: new SvgDrawer(board),
       text: new TextDrawer(board),
       textPath: new TextPathDrawer(board),
-      svg: new SvgDrawer(board),
+      textSvg: new TextSvgDrawer(board),
+      triangle: new TriangleDrawer(board),
       ...this.registerShapes?.(board)
-    } as Shapes
+    } as unknown as Shapes
 
     this.import = new Import(board, this.shapes)
     this.export = new Export(board, this.cropper)
