@@ -28,7 +28,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     super(board, node, config)
 
     this.config = config
-    // this.orgText = node.getText().text()
+    this.orgText = node.getText().getAttr('orgText')
     node.on('transform', this.transform.bind(this))
     node.on('dblclick', this.inlineEdit.bind(this))
   }
@@ -215,7 +215,6 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
       this.board.setActiveDrawing(null)
 
       const newText = convertHtmlToText((<HTMLSpanElement>e.target).innerHTML)
-      console.log('newText', newText)
       if (newText !== textBeforeEdit) {
         this.board.history.create(this.board.layer, [], {
           undo: () => this.changeText(textBeforeEdit),
