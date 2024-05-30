@@ -233,6 +233,11 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     return this.textPathNode.height()
   }
 
+  public getTextWidth() {
+    let w = this.textPathNode.getSelfRect().width
+    return w + 5
+  }
+
   public getFontSize(): number {
     const node = this.textPathNode
     const scale = node.getAbsoluteScale()
@@ -259,6 +264,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
         height: rect.height
       })
     }
+    console.log('text Width', this.getTextWidth())
   }
 
   /**
@@ -269,8 +275,20 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
       this.board.selection.transformer.forceUpdate()
     }
   }
+
+  /**
+   * Sync Position after changing every thing
+   * @param e
+   * @private
+   */
   private sync(e: Konva.KonvaEventObject<MouseEvent>) {
     this._sync()
     this.updateTransformer()
   }
+
+  public getArcPath() {
+
+  }
+
+
 }

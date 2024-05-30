@@ -223,7 +223,10 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
       }
 
       // update label's text
-      this.textNode.setText(newText)
+      this.textNode.setAttrs({
+        text: newText,
+        orgText: newText
+      })
 
       // update original text
       this.setOrgText(newText)
