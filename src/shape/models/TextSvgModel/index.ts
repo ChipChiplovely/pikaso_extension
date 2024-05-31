@@ -17,6 +17,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     super(board, node, config)
 
     this.config = config
+    this.orgText = this.textPathNode.getAttr('orgText')
     node.on('dblclick', this.inlineEdit.bind(this))
     node.find('TextPath')[0].on('dataChange', this.sync.bind(this))
     node.find('TextPath')[0].on('fontFamilyChange', this.sync.bind(this))
@@ -233,8 +234,10 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     return this.textPathNode.height()
   }
 
-  public getTextWidth() {
-    let w = this.textPathNode.getSelfRect().width
+  public getTextPathWidth() {
+    console.log('pathLength', this.textPathNode.pathLength)
+    console.log('_getTextPathLength', this.textPathNode._getTextPathLength())
+    let w = this.textPathNode._getTextPathLength()
     return w + 5
   }
 
@@ -252,6 +255,13 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     this.updateTransformer()
   }
 
+  public updateTag(attributes: Partial<Konva.TagConfig>) {
+    this.board.history.create(this.board.layer, this.tagNode)
+    this.tagNode.setAttrs(attributes)
+
+    this.updateTransformer()
+  }
+
   private _sync() {
     let textPath = this.textPathNode
     let tag = this.tagNode
@@ -264,7 +274,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
         height: rect.height
       })
     }
-    console.log('text Width', this.getTextWidth())
+    console.log('text Width', this.getTextPathWidth())
   }
 
   /**
