@@ -35,6 +35,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     node.find('TextPath')[0].on('textChange', this.textChange.bind(this))
     node.find('TextPath')[0].on('letterSpacingChange', this.sync.bind(this))
     node.find('TextPath')[0].on('alignChange', this.sync.bind(this))
+    node.find('TextPath')[0].on('fillChange', this.sync.bind(this))
     node.find('Tag')[0].on('fillChange', this.tagFillChange.bind(this))
     node.on('dragend', this.sync.bind(this))
     this._sync()
