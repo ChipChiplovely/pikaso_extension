@@ -19,12 +19,16 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    */
   private labelRefer: LabelModel
 
+  private firstVector: Konva.Vector2d
+  private percent: number = 50
+
   constructor(board: Board, node: Konva.Group, config: TextPathConfig = {}) {
     super(board, node, config)
 
     this.config = config
     this.orgText = this.textPathNode.getAttr('orgText')
     node.on('dblclick', this.inlineEdit.bind(this))
+    node.on('transformend', this.transformend.bind(this))
     node.find('TextPath')[0].on('dataChange', this.sync.bind(this))
     node.find('TextPath')[0].on('fontFamilyChange', this.sync.bind(this))
     node.find('TextPath')[0].on('fontSizeChange', this.sync.bind(this))
@@ -168,8 +172,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
 
       this.textPathNode.setAttrs({
         draggable: false,
-        text: newText,
-        // data: this.getTextLength()
+        text: newText
       })
 
       // select node
@@ -285,6 +288,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
       const cRect = textPath.getClientRect()
       const sRect = textPath.getSelfRect()
       const textPathAttrs = textPath.getAttrs()
+      const scale = this.node.getAbsoluteScale()
       tag.setAttrs({
         x: sRect.x,
         y: sRect.y,
@@ -298,11 +302,6 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
           // Sync Position for Label
           const centerX = cRect.x + cRect.width / 2
           const centerY = cRect.y + cRect.height / 2
-          let lRect = this.labelRefer.node.getClientRect()
-          this.labelRefer.node.setAbsolutePosition({
-            x: centerX - lRect.width / 2,
-            y: centerY - lRect.height / 2
-          })
           this.labelRefer.updateText({
             fontFamily: textPathAttrs.fontFamily,
             fontSize: textPathAttrs.fontSize,
@@ -310,6 +309,15 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
             fill: textPathAttrs.fill,
             letterSpacing: textPathAttrs.letterSpacing,
             rotation: textPathAttrs.rotation
+          })
+
+          // Set attributes for Label from TextSvg
+          let lRect = this.labelRefer.node.getClientRect()
+          this.labelRefer.node.setAttrs({
+            x: centerX - lRect.width / 2,
+            y: centerY - lRect.height / 2,
+            scaleX: scale.x,
+            scaleY: scale.y
           })
         } catch (e) {
           console.log('Error:', e)
@@ -337,14 +345,25 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     this.updateTransformer()
   }
 
+  /**
+   * Sync fontsize after changing every thing
+   * @param e
+   * @private
+   */
+  private transformend(e: Konva.KonvaEventObject<MouseEvent>) {
+    console.log('node', this.node)
+    this._sync()
+    this.updateTransformer()
+  }
+
   private textChange(e: Konva.KonvaEventObject<MouseEvent>) {
-    // this._sync()
-    // this.updateTransformer()
-    this.textPathNode.setAttrs({
-      draggable: false,
-      data: this.getTextLength(50)
-    })
-    console.log('Change Tex')
+    // this.textPathNode.setAttrs({
+    //   draggable: false,
+    //   data: this.getTextLength(this.percent)
+    // })
+    // console.log('Change Tex')
+    this._sync()
+    this.updateTransformer()
   }
 
   /**
@@ -352,7 +371,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    * @param labelRef
    */
   // eslint-disable-next-line @typescript-eslint/member-ordering
-  public setLabelRefer(labelRef: LabelModel) {
+  public setReferLabel(labelRef: LabelModel) {
     this.labelRefer = labelRef
   }
 
@@ -364,11 +383,16 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     return this.labelRefer
   }
 
+  /**
+   * Get length of text to using as diameter for calculator of Arc
+   * @param percent
+   * @private
+   */
   private getTextLength(percent: number) {
     let l = this.calCurvatureLength()
-    let r = (l * 100 / percent) / (2 * Math.PI)
-    let d = this.getArcPath(l, Math.abs(r), percent > 0 ? 1: 0, Math.abs(percent) === 100 ? true : false);
-    console.log('r, l, d', r, l, d)
+    let r = (l * 100) / percent / (2 * Math.PI)
+    let fullCycle = Math.abs(percent) === 100 ? true : false
+    let d = this.getArcPath(l, Math.abs(r), percent > 0 ? 1 : 0, fullCycle)
     return d
   }
 
@@ -376,10 +400,12 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     const letterSpacing = this.textPathNode.letterSpacing()
     // @ts-ignore
     const length = this.textPathNode._getTextSize(this.textPathNode.text).width
+    // const length = this.textPathNode.getTextWidth()
     const textWidth = Math.max(
       length + ((this.textPathNode.text || '').length - 1) * letterSpacing,
       0
     )
+
     return textWidth
   }
 
@@ -415,7 +441,8 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
       }
     }
     x2 -= x1, y2 -= y1, x1 = 0, y1 = 0
-    return `M${x1},${y1} A${r},${r} 0 ${largeArcFlag},${sweepFlag} ${x2},${y2}`
+    // return `M${x1},${y1} a${r},${r} 0 ${largeArcFlag},${sweepFlag} ${x2},${y2}`
+    return `M 0 ${r} a ${r / 2} ${r / 2} 0 1 1 1 0`
   }
 
   /**
@@ -424,11 +451,11 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    */
   // eslint-disable-next-line @typescript-eslint/member-ordering
   public setPercent(percent: number) {
+    this.percent = percent
     this.textPathNode.setAttrs({
       draggable: false,
       data: this.getTextLength(percent)
     })
-    console.log('Update Data')
     this._sync()
     this.updateTransformer()
   }
