@@ -114,6 +114,20 @@ export class Import {
             instance = this.shapes.svg.insert(json.attrs as Konva.PathConfig)
             break
 
+          case 'TextPath':
+            instance = this.shapes.textPath.insert({
+              textPath: json.attrs as Konva.TextPathConfig
+            })
+            break
+
+          case 'TextSvg':
+            instance = this.shapes.textSvg.insert({
+              container: json.attrs as Konva.ContainerConfig,
+              tag: json.children![0].attrs as Konva.TagConfig,
+              textPath: json.children![1].attrs as Konva.TextPathConfig
+            })
+            break
+
           case 'Group':
             instance = this.board.groups.find(json.attrs.name)?.container
             break

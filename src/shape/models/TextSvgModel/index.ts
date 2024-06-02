@@ -35,6 +35,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     node.find('TextPath')[0].on('textChange', this.textChange.bind(this))
     node.find('TextPath')[0].on('letterSpacingChange', this.sync.bind(this))
     node.find('TextPath')[0].on('alignChange', this.sync.bind(this))
+    node.find('Tag')[0].on('fillChange', this.tagFillChange.bind(this))
     node.on('dragend', this.sync.bind(this))
     this._sync()
   }
@@ -366,6 +367,22 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     this.updateTransformer()
   }
 
+  private tagFillChange(e: Konva.KonvaEventObject<MouseEvent>) {
+    let textPath = this.textPathNode
+    let tag = this.tagNode
+    if (textPath && tag) {
+      if (this.labelRefer && !this.labelRefer.isVisible) {
+        try {
+          // Sync Position for Label
+          this.labelRefer.updateTag({
+            fill: tag.getAttr('fill')
+          })
+        } catch (e) {
+          console.log('Error:', e)
+        }
+      }
+    }
+  }
   /**
    * Set Label for sync data when TextSvg change anything
    * @param labelRef
@@ -379,84 +396,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    * Return Label object
    */
   // eslint-disable-next-line @typescript-eslint/member-ordering
-  public getLabelRefer() {
+  public getReferLabel() {
     return this.labelRefer
-  }
-
-  /**
-   * Get length of text to using as diameter for calculator of Arc
-   * @param percent
-   * @private
-   */
-  private getTextLength(percent: number) {
-    let l = this.calCurvatureLength()
-    let r = (l * 100) / percent / (2 * Math.PI)
-    let fullCycle = Math.abs(percent) === 100 ? true : false
-    let d = this.getArcPath(l, Math.abs(r), percent > 0 ? 1 : 0, fullCycle)
-    return d
-  }
-
-  private calCurvatureLength() {
-    const letterSpacing = this.textPathNode.letterSpacing()
-    // @ts-ignore
-    const length = this.textPathNode._getTextSize(this.textPathNode.text).width
-    // const length = this.textPathNode.getTextWidth()
-    const textWidth = Math.max(
-      length + ((this.textPathNode.text || '').length - 1) * letterSpacing,
-      0
-    )
-
-    return textWidth
-  }
-
-  /**
-   * Get ArcPath of text and length
-   */
-  // eslint-disable-next-line @typescript-eslint/member-ordering
-  private getArcPath(
-    l: number,
-    r: number,
-    sweepFlag: number,
-    fullCycle: boolean
-  ) {
-    const upc = sweepFlag
-    const n = (l / (2 * Math.PI * r)) * (Math.PI * 2)
-    const n2 = n / 2
-    const largeArcFlag = n > Math.PI ? 1 : 0
-    const ax = Math.abs(r * Math.sin(n2))
-    const ay = Math.abs(r * Math.cos(n2))
-    let x1, y1, x2, y2
-    x1 = r - ax
-    x2 = r + ax
-    if (fullCycle) {
-      x1 = 0
-      y1 = 0
-      x2 = 1
-      y2 = 0
-    } else {
-      if (upc) {
-        y1 = y2 = r + ay
-      } else {
-        y1 = y2 = r - ay
-      }
-    }
-    x2 -= x1, y2 -= y1, x1 = 0, y1 = 0
-    // return `M${x1},${y1} a${r},${r} 0 ${largeArcFlag},${sweepFlag} ${x2},${y2}`
-    return `M 0 ${r} a ${r / 2} ${r / 2} 0 1 1 1 0`
-  }
-
-  /**
-   * Update data for TextPath when the system change Percent of Arc
-   * @param percent
-   */
-  // eslint-disable-next-line @typescript-eslint/member-ordering
-  public setPercent(percent: number) {
-    this.percent = percent
-    this.textPathNode.setAttrs({
-      draggable: false,
-      data: this.getTextLength(percent)
-    })
-    this._sync()
-    this.updateTransformer()
   }
 }
