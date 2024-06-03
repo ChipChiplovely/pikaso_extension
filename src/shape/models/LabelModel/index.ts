@@ -34,6 +34,12 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     this.orgText = node.getText().getAttr('orgText')
     node.on('transform', this.transform.bind(this))
     node.on('dblclick', this.inlineEdit.bind(this))
+    node.on('dragend', this.sync.bind(this))
+    node.getTag().on('fillChange', this.tagFillChange.bind(this))
+    node.getText().on('fontFamilyChange', this.sync.bind(this))
+    node.getText().on('fontSizeChange', this.sync.bind(this))
+    node.getText().on('letterSpacingChange', this.sync.bind(this))
+
   }
 
   /**
@@ -138,6 +144,16 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
       this.node.scaleX(this.textNode.scaleY())
       this.tagNode.scaleX(this.node.scaleY())
     }
+  }
+
+  /**
+   * Sync Position after changing every thing
+   * @param e
+   * @private
+   */
+  private sync(e: Konva.KonvaEventObject<MouseEvent>) {
+    this._syncAttrs()
+    this.updateTransformer()
   }
 
   /**
@@ -355,5 +371,59 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
   // eslint-disable-next-line @typescript-eslint/member-ordering
   public getReferTextSvg() {
     return this.referTextSvg
+  }
+
+  private tagFillChange(e: Konva.KonvaEventObject<MouseEvent>) {
+    let tag = this.tagNode
+    if (tag) {
+      if (this.referTextSvg && !this.referTextSvg.isVisible) {
+        try {
+          // Sync Position for Label
+          this.referTextSvg.updateTag({
+            fill: tag.getAttr('fill')
+          })
+        } catch (e) {
+          console.log('Error:', e)
+        }
+      }
+    }
+  }
+
+  private _syncAttrs() {
+    let text = this.textNode
+    let tag = this.tagNode
+    if (text && tag) {
+      const cRect = text.getClientRect()
+      const textAttrs = text.getAttrs()
+      const scale = this.node.getAbsoluteScale()
+
+      if (this.referTextSvg && !this.referTextSvg.isVisible) {
+        try {
+          this.referTextSvg.setOrgText(this.getOrgText())
+          // Sync Position for Label
+          const centerX = cRect.x + cRect.width / 2
+          const centerY = cRect.y + cRect.height / 2
+          this.referTextSvg.updateText({
+            fontFamily: textAttrs.fontFamily,
+            fontSize: textAttrs.fontSize,
+            fontStyle: textAttrs.fontStyle,
+            fill: textAttrs.fill,
+            letterSpacing: textAttrs.letterSpacing,
+            rotation: textAttrs.rotation
+          })
+
+          // Set attributes for Label from TextSvg
+          let lRect = this.referTextSvg.node.getClientRect()
+          this.referTextSvg.node.setAttrs({
+            x: centerX - lRect.width / 2,
+            y: centerY - lRect.height / 2,
+            scaleX: scale.x,
+            scaleY: scale.y
+          })
+        } catch (e) {
+          console.log('Error:', e)
+        }
+      }
+    }
   }
 }
