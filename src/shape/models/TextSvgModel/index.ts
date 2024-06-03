@@ -260,6 +260,18 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
   }
 
   /**
+   * Set fontSize by Scale
+   * @param fontSize
+   */
+  public setFontSize(fontSize: number) {
+    const node = this.textPathNode
+    const scale = node.getAbsoluteScale()
+    this.updateText({
+      fontSize: Math.ceil(fontSize / scale.x)
+    })
+  }
+
+  /**
    * Update Attributes for TextPath object
    * @param attributes
    */
@@ -384,6 +396,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
       }
     }
   }
+
   /**
    * Set Label for sync data when TextSvg change anything
    * @param labelRef
