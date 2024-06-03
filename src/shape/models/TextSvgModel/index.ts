@@ -260,7 +260,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
   }
 
   /**
-   * Set fontSize by Scale
+   * Set fontSize for TextPath by Scale
    * @param fontSize
    */
   public setFontSize(fontSize: number) {
@@ -371,11 +371,6 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
   }
 
   private textChange(e: Konva.KonvaEventObject<MouseEvent>) {
-    // this.textPathNode.setAttrs({
-    //   draggable: false,
-    //   data: this.getTextLength(this.percent)
-    // })
-    // console.log('Change Tex')
     this._sync()
     this.updateTransformer()
   }
