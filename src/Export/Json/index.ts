@@ -69,7 +69,6 @@ export class JsonExport {
     if (data.className === 'Image' && node.attrs.image) {
       data.attrs.url = node.attrs.image.src
     }
-
     const filters = (node.filters() || []).map(filter => {
       return Object.keys(Konva.Filters).find(
         (name: keyof typeof Konva.Filters) => Konva.Filters[name] === filter
@@ -100,7 +99,9 @@ export class JsonExport {
       filters,
       className: data.className,
       ...(!exclude.includes('zIndex') && { zIndex: node.zIndex() }),
-      ...(['Label'].includes(data.className) && { children: data.children })
+      ...(['Label'].includes(data.className) && { children: data.children }),
+      ...(['TextPath'].includes(data.className) && { children: data.children }),
+      ...(['TextSvg'].includes(data.className) && { children: data.children })
     }
   }
 }

@@ -51,6 +51,8 @@ export declare interface LabelConfig extends ShapeConfig {
 export declare interface TextPathConfig extends ShapeConfig {
 }
 
+export declare interface TextSvgConfig extends ShapeConfig {
+}
 export declare type RegisterShapesFn<T> = (
   board: Board
 ) => Omit<T, keyof BaseShapes>

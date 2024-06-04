@@ -6,7 +6,7 @@ import {isBrowser, isNode} from '../../../utils/detect-environment'
 import {rotateAroundCenter} from '../../../utils/rotate-around-center'
 import {ShapeModel} from '../../ShapeModel'
 import {LabelModel} from "../LabelModel";
-import {DrawType, TextPathConfig} from '../../../types'
+import {DrawType, TextSvgConfig} from '../../../types'
 
 export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
   /**
@@ -18,8 +18,8 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    * @private
    */
   private labelRefer: LabelModel
-  
-  constructor(board: Board, node: Konva.Group, config: TextPathConfig = {}) {
+
+  constructor(board: Board, node: Konva.Group, config: TextSvgConfig = {}) {
     super(board, node, config)
     this.config = config
     this.orgText = this.textPathNode.getAttr('orgText')

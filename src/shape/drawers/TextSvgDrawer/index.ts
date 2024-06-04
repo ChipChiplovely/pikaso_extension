@@ -3,7 +3,7 @@ import Konva from 'konva'
 import {Board} from '../../../Board'
 
 import {TextSvgModel} from '../../models/TextSvgModel'
-import type { TextPathConfig } from '../../../types/shapes'
+import type { TextSvgConfig } from '../../../types/shapes'
 
 export class TextSvgDrawer {
   /**
@@ -34,7 +34,7 @@ export class TextSvgDrawer {
       container?: Konva.ContainerConfig,
       textPath: Konva.TextPathConfig,
       tag?: Konva.TagConfig,
-      config?: TextPathConfig
+      config?: TextSvgConfig
     }): TextSvgModel {
     const textSvg = new Konva.Group({
       ...container,
@@ -43,7 +43,23 @@ export class TextSvgDrawer {
     textSvg.className = 'TextSvg'
     const textPathNode = new Konva.TextPath(textPath)
     const tagNode = new Konva.Tag(tag)
+
     textSvg.add(tagNode).add(textPathNode)
-    return new TextSvgModel(this.board, textSvg, config)
+
+    return new TextSvgModel(this.board, textSvg, {
+      ...config,
+      transformer: {
+        centeredScaling: true,
+        keepRatio: true,
+        flipEnabled: false,
+        enabledAnchors: [
+          'top-left',
+          'top-right',
+          'bottom-left',
+          'bottom-right'
+        ],
+        ...(config?.transformer ?? {})
+      }
+    })
   }
 }
