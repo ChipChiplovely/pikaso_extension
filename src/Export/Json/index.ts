@@ -30,7 +30,8 @@ export class JsonExport {
     ])
     const layer = this.nodeToObject(this.board.layer, ['children', 'zIndex'])
 
-    const shapes = this.board.activeShapes.map(shape => {
+    // const shapes = this.board.activeShapes.map(shape => {
+    const shapes = this.board.shapes.map(shape => {
       return {
         ...this.nodeToObject(shape.node, []),
         group: shape.group
