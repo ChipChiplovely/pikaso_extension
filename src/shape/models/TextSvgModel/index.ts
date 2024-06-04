@@ -18,13 +18,9 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    * @private
    */
   private labelRefer: LabelModel
-
-  private firstVector: Konva.Vector2d
-  private percent: number = 50
-
+  
   constructor(board: Board, node: Konva.Group, config: TextPathConfig = {}) {
     super(board, node, config)
-
     this.config = config
     this.orgText = this.textPathNode.getAttr('orgText')
     node.on('dblclick', this.inlineEdit.bind(this))
@@ -399,6 +395,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
   // eslint-disable-next-line @typescript-eslint/member-ordering
   public setReferLabel(labelRef: LabelModel) {
     this.labelRefer = labelRef
+    // this.node.add(labelRef.node)
   }
 
   /**

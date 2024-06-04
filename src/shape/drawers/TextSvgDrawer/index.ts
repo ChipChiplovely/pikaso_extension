@@ -40,6 +40,7 @@ export class TextSvgDrawer {
       ...container,
       draggable: this.board.settings.selection?.interactive
     })
+    textSvg.className = 'TextSvg'
     const textPathNode = new Konva.TextPath(textPath)
     const tagNode = new Konva.Tag(tag)
     textSvg.add(tagNode).add(textPathNode)
