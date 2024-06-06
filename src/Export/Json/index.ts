@@ -66,7 +66,6 @@ export class JsonExport {
     exclude: string[] = []
   ) {
     const data = node.toObject()
-
     if (data.className === 'Image' && node.attrs.image) {
       data.attrs.url = node.attrs.image.src
     }
@@ -83,7 +82,7 @@ export class JsonExport {
           x: node.x() ?? undefined,
           y: node.y() ?? undefined,
           width: node.width() || undefined,
-          height: node.height() || undefined
+          height: node.height() || undefined,
         }).reduce(
           (acc, [key, value]) => ({
             ...acc,

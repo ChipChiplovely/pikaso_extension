@@ -1,28 +1,26 @@
 import Konva from 'konva'
 
-import {convertHtmlToText} from '../../../utils/html-to-text'
-import {Board} from '../../../Board'
-import {isBrowser, isNode} from '../../../utils/detect-environment'
-import {rotateAroundCenter} from '../../../utils/rotate-around-center'
-import {ShapeModel} from '../../ShapeModel'
-import {LabelModel} from "../LabelModel";
-import {DrawType, TextSvgConfig} from '../../../types'
+import { convertHtmlToText } from '../../../utils/html-to-text'
+import { Board } from '../../../Board'
+import { isBrowser, isNode } from '../../../utils/detect-environment'
+import { rotateAroundCenter } from '../../../utils/rotate-around-center'
+import { ShapeModel } from '../../ShapeModel'
+import { LabelModel } from '../LabelModel'
+import { DrawType, TextSvgConfig } from '../../../types'
 
 export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
   /**
    * add more original text no format
    */
-  private orgText: string
   /**
    * Refer to label to synchonize
    * @private
    */
-  private labelRefer: LabelModel
+  private referShape: LabelModel
 
   constructor(board: Board, node: Konva.Group, config: TextSvgConfig = {}) {
     super(board, node, config)
     this.config = config
-    this.orgText = this.textPathNode.getAttr('orgText')
     node.on('dblclick', this.inlineEdit.bind(this))
     node.on('transformend', this.transformend.bind(this))
     node.find('TextPath')[0].on('dataChange', this.sync.bind(this))
@@ -62,7 +60,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    * Returns the original content of Text
    */
   public getOrgText() {
-    return this.orgText
+    return this.textPathNode.getAttr('orgText')
   }
 
   /**
@@ -70,7 +68,8 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    * @param orgText
    */
   public setOrgText(orgText: string) {
-    this.orgText = orgText
+    this.updateText({ orgText: orgText, text: orgText })
+    console.log('SVG set orgText', orgText)
   }
 
   /**
@@ -86,7 +85,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
   }
 
   /**
-   * Enables inline editing of the label with double clicking on the node
+   * Enables inline editing of the TextSvg with double clicking on the node
    *
    * @param e The [[MouseEvent | Mouse Event]
    */
@@ -99,7 +98,6 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     this.board.setActiveDrawing(DrawType.TextPath)
 
     const textBeforeEdit = this.textPathNode.getAttr('text')
-    // console.log('textBeforeEdit', textBeforeEdit)
     // hide node
     // this.node.hide()
     this.textPathNode?.draggable(false)
@@ -164,14 +162,16 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
 
       // update label's text
       // this.node.text(newText)
-      // update original text
-      this.setOrgText(newText)
       // this.node.show()
 
-      this.textPathNode.setAttrs({
+      this.updateText({
         draggable: false,
-        text: newText
+        text: newText,
+        orgText: newText
       })
+      if (this.referShape) {
+        this.referShape.setOrgText(newText)
+      }
 
       // select node
       this.board.selection.add(this)
@@ -235,10 +235,12 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     })
   }
 
+  // eslint-disable-next-line @typescript-eslint/member-ordering
   public getWidth() {
     return this.textPathNode.width()
   }
 
+  // eslint-disable-next-line @typescript-eslint/member-ordering
   public getHeight() {
     return this.textPathNode.height()
   }
@@ -259,6 +261,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    * Set fontSize for TextPath by Scale
    * @param fontSize
    */
+  // eslint-disable-next-line @typescript-eslint/member-ordering
   public setFontSize(fontSize: number) {
     const node = this.textPathNode
     const scale = node.getAbsoluteScale()
@@ -306,24 +309,24 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
         height: sRect.height
       })
 
-      if (this.labelRefer && !this.labelRefer.isVisible) {
+      if (this.referShape && !this.referShape.isVisible) {
         try {
-          this.labelRefer.setOrgText(this.getOrgText())
           // Sync Position for Label
           const centerX = cRect.x + cRect.width / 2
           const centerY = cRect.y + cRect.height / 2
-          this.labelRefer.updateText({
+          this.referShape.updateText({
             fontFamily: textPathAttrs.fontFamily,
             fontSize: textPathAttrs.fontSize,
             fontStyle: textPathAttrs.fontStyle,
             fill: textPathAttrs.fill,
             letterSpacing: textPathAttrs.letterSpacing,
-            rotation: textPathAttrs.rotation
+            rotation: textPathAttrs.rotation,
+            orgText: textPathAttrs.orgText
           })
 
           // Set attributes for Label from TextSvg
-          let lRect = this.labelRefer.node.getClientRect()
-          this.labelRefer.node.setAttrs({
+          let lRect = this.referShape.node.getClientRect()
+          this.referShape.node.setAttrs({
             x: centerX - lRect.width / 2,
             y: centerY - lRect.height / 2,
             scaleX: scale.x,
@@ -361,7 +364,6 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    * @private
    */
   private transformend(e: Konva.KonvaEventObject<MouseEvent>) {
-    console.log('node', this.node)
     this._sync()
     this.updateTransformer()
   }
@@ -372,13 +374,12 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
   }
 
   private tagFillChange(e: Konva.KonvaEventObject<MouseEvent>) {
-    let textPath = this.textPathNode
     let tag = this.tagNode
-    if (textPath && tag) {
-      if (this.labelRefer && !this.labelRefer.isVisible) {
+    if (tag) {
+      if (this.referShape && !this.referShape.isVisible) {
         try {
           // Sync Position for Label
-          this.labelRefer.updateTag({
+          this.referShape.updateTag({
             fill: tag.getAttr('fill')
           })
         } catch (e) {
@@ -390,19 +391,35 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
 
   /**
    * Set Label for sync data when TextSvg change anything
-   * @param labelRef
+   * @param referShape
    */
   // eslint-disable-next-line @typescript-eslint/member-ordering
-  public setReferLabel(labelRef: LabelModel) {
-    this.labelRefer = labelRef
-    // this.node.add(labelRef.node)
+  public setReferLabel(referShape: LabelModel) {
+    this.referShape = referShape
   }
 
   /**
-   * Return Label object
+   * Return Label model object
    */
   // eslint-disable-next-line @typescript-eslint/member-ordering
   public getReferLabel() {
-    return this.labelRefer
+    return this.referShape
+  }
+
+  /**
+   * Set Label for sync data when TextSvg change anything
+   * @param referShape
+   */
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  public setReferShape(referShape: LabelModel) {
+    this.referShape = referShape
+  }
+
+  /**
+   * Return Label model object
+   */
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  public getReferShape() {
+    return this.referShape
   }
 }

@@ -1,13 +1,13 @@
 import Konva from 'konva'
 
-import {convertHtmlToText} from '../../../utils/html-to-text'
+import { convertHtmlToText } from '../../../utils/html-to-text'
 
-import {Board} from '../../../Board'
-import {ShapeModel} from '../../ShapeModel'
-import {isBrowser, isNode} from '../../../utils/detect-environment'
-import {rotateAroundCenter} from '../../../utils/rotate-around-center'
-import {DrawType, LabelConfig} from '../../../types'
-import {TextSvgModel} from '../TextSvgModel'
+import { Board } from '../../../Board'
+import { ShapeModel } from '../../ShapeModel'
+import { isBrowser, isNode } from '../../../utils/detect-environment'
+import { rotateAroundCenter } from '../../../utils/rotate-around-center'
+import { DrawType, LabelConfig } from '../../../types'
+import { TextSvgModel } from '../TextSvgModel'
 
 export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
   /**
@@ -21,17 +21,13 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
   private isEditingEnabled = false
 
   /**
-   * add more original text no format
+   * add more Refer Node
    */
-  private orgText: string
-
-  private referTextSvg: TextSvgModel
+  private referShape: TextSvgModel
 
   constructor(board: Board, node: Konva.Label, config: LabelConfig = {}) {
     super(board, node, config)
-
     this.config = config
-    this.orgText = node.getText().getAttr('orgText')
     node.on('transform', this.transform.bind(this))
     node.on('dblclick', this.inlineEdit.bind(this))
     node.on('dragend', this.sync.bind(this))
@@ -39,6 +35,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     node.getText().on('fontFamilyChange', this.sync.bind(this))
     node.getText().on('fontSizeChange', this.sync.bind(this))
     node.getText().on('letterSpacingChange', this.sync.bind(this))
+    node.getText().on('textChange', this.textChange.bind(this))
 
   }
 
@@ -74,7 +71,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
    * Returns the original content of Text
    */
   public getOrgText() {
-    return this.orgText
+    return this.textNode.getAttr('orgText')
   }
 
   /**
@@ -82,7 +79,10 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
    * @param orgText
    */
   public setOrgText(orgText: string) {
-    this.orgText = orgText
+    this.updateText({
+      orgText: orgText
+    })
+    console.log('Label set orgText', orgText)
   }
 
   /**
@@ -247,13 +247,15 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
         orgText: newText
       })
 
-      // update original text
-      this.setOrgText(newText)
       // this.node.show()
       this.node.setAttrs({
         draggable: this.board.settings.selection?.interactive,
         width: this.textNode.width()
       })
+
+      if (this.referShape) {
+        this.referShape.setOrgText(newText)
+      }
 
       // select node
       this.board.selection.add(this)
@@ -348,6 +350,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
    * Set fontSize for Text by Scale
    * @param fontSize
    */
+  // eslint-disable-next-line @typescript-eslint/member-ordering
   public setFontSize(fontSize: number) {
     const node = this.textNode
     const scale = node.getAbsoluteScale()
@@ -356,30 +359,18 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     })
   }
 
-  /**
-   * Set Label for sync data when TextSvg change anything
-   * @param referTextSvg
-   */
-  // eslint-disable-next-line @typescript-eslint/member-ordering
-  public setReferTextSvg(referTextSvg: TextSvgModel) {
-    this.referTextSvg = referTextSvg
-  }
-
-  /**
-   * Return refer TextSvgModel object
-   */
-  // eslint-disable-next-line @typescript-eslint/member-ordering
-  public getReferTextSvg() {
-    return this.referTextSvg
+  private textChange(e: Konva.KonvaEventObject<MouseEvent>) {
+    this._syncAttrs()
+    this.updateTransformer()
   }
 
   private tagFillChange(e: Konva.KonvaEventObject<MouseEvent>) {
     let tag = this.tagNode
     if (tag) {
-      if (this.referTextSvg && !this.referTextSvg.isVisible) {
+      if (this.referShape && !this.referShape.isVisible) {
         try {
           // Sync Position for Label
-          this.referTextSvg.updateTag({
+          this.referShape.updateTag({
             fill: tag.getAttr('fill')
           })
         } catch (e) {
@@ -397,24 +388,24 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
       const textAttrs = text.getAttrs()
       const scale = this.node.getAbsoluteScale()
 
-      if (this.referTextSvg && !this.referTextSvg.isVisible) {
+      if (this.referShape && !this.referShape.isVisible) {
         try {
-          this.referTextSvg.setOrgText(this.getOrgText())
           // Sync Position for Label
           const centerX = cRect.x + cRect.width / 2
           const centerY = cRect.y + cRect.height / 2
-          this.referTextSvg.updateText({
+          this.referShape.updateText({
             fontFamily: textAttrs.fontFamily,
             fontSize: textAttrs.fontSize,
             fontStyle: textAttrs.fontStyle,
             fill: textAttrs.fill,
             letterSpacing: textAttrs.letterSpacing,
-            rotation: textAttrs.rotation
+            rotation: textAttrs.rotation,
+            orgText: textAttrs.orgText
           })
 
           // Set attributes for Label from TextSvg
-          let lRect = this.referTextSvg.node.getClientRect()
-          this.referTextSvg.node.setAttrs({
+          let lRect = this.referShape.node.getClientRect()
+          this.referShape.node.setAttrs({
             x: centerX - lRect.width / 2,
             y: centerY - lRect.height / 2,
             scaleX: scale.x,
@@ -425,5 +416,39 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
         }
       }
     }
+  }
+
+  /**
+   * Set Label for sync data when TextSvg change anything
+   * @param referShape
+   */
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  public setReferTextSvg(referShape: TextSvgModel) {
+    this.referShape = referShape
+  }
+
+  /**
+   * Return refer TextSvgModel object
+   */
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  public getReferTextSvg() {
+    return this.referShape
+  }
+
+  /**
+   * Set Label for sync data when TextSvg change anything
+   * @param referShape
+   */
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  public setReferShape(referShape: TextSvgModel) {
+    this.referShape = referShape
+  }
+
+  /**
+   * Return refer TextSvgModel object
+   */
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  public getReferShape() {
+    return this.referShape
   }
 }
