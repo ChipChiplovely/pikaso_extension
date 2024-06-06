@@ -29,6 +29,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     super(board, node, config)
     this.config = config
     node.on('transform', this.transform.bind(this))
+    node.on('transformend', this.transformend.bind(this))
     node.on('dblclick', this.inlineEdit.bind(this))
     node.on('rotationChange', this.rotationChange.bind(this))
     node.on('dragend', this.syncPosition.bind(this))
@@ -37,6 +38,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     node.getText().on('fontSizeChange', this.sync.bind(this))
     node.getText().on('letterSpacingChange', this.sync.bind(this))
     node.getText().on('textChange', this.textChange.bind(this))
+    this._syncAttrs()
   }
 
   /**
@@ -82,6 +84,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     this.updateText({
       orgText: orgText
     })
+    this.syncPosition()
   }
 
   /**
@@ -136,15 +139,25 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     ) {
       this.textNode.setAttrs({
         width: Math.max(this.node.width() * this.node.scaleX(), 30),
-        scaleX: this.node.scaleY(),
         wrap: 'word'
       })
-
-      this.node.scaleX(this.textNode.scaleY())
-      this.tagNode.scaleX(this.node.scaleY())
-
-      this.syncPosition()
+      this.node.scaleX(this.node.scaleY())
     }
+  }
+
+  /**
+   * Sync fontsize after changing every thing
+   * @param e
+   * @private
+   */
+  private transformend(e: Konva.KonvaEventObject<MouseEvent>) {
+    if (this.referShape && !this.referShape.isVisible) {
+      this.referShape.node.setAttrs({
+        scaleX: this.node.getAbsoluteScale().x,
+        scaleY: this.node.getAbsoluteScale().y
+      })
+    }
+    this.updateTransformer()
   }
 
   /**
@@ -254,7 +267,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
         width: this.textNode.width()
       })
 
-      if (this.referShape) {
+      if (this.referShape && !this.referShape.isVisible) {
         this.referShape.setOrgText(newText)
       }
 
@@ -274,7 +287,6 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     })
 
     this.updateTransformer()
-    this.syncPosition()
 
     this.board.events.emit('label:update-text', {
       shapes: [this],
@@ -364,7 +376,6 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
   private textChange(e: Konva.KonvaEventObject<MouseEvent>) {
     this._syncAttrs()
     this.updateTransformer()
-    this.syncPosition()
   }
 
   private tagFillChange(e: Konva.KonvaEventObject<MouseEvent>) {
@@ -388,7 +399,6 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     let tag = this.tagNode
     if (text && tag) {
       const textAttrs = text.getAttrs()
-      const scale = this.node.getAbsoluteScale()
 
       if (this.referShape && !this.referShape.isVisible) {
         try {
@@ -403,11 +413,9 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
 
           // Set attributes for Label from TextSvg
           this.referShape.node.setAttrs({
-            scaleX: scale.x,
-            scaleY: scale.y,
             rotation: this.node.getAttr('rotation')
           })
-          console.log('this.referShape.node', this.referShape.node)
+          this.syncPosition()
         } catch (e) {
           console.log('Error:', e)
         }
@@ -423,14 +431,13 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     this.referShape.node.setAttrs({
       rotation: this.node.getAttr('rotation')
     })
-    this.syncPosition()
   }
 
   /**
    * Sync position between shapes
-   * @private
+   * @public
    */
-  private syncPosition() {
+  public syncPosition() {
     const rect = this.node.getClientRect()
     const refRect = this.referShape.node.getClientRect()
     const refAttr = this.referShape.node.attrs

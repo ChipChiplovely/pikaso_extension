@@ -172,7 +172,6 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
       })
       if (this.referShape) {
         this.referShape.setOrgText(newText)
-        this.syncPosition()
       }
 
       // select node
@@ -322,16 +321,10 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
             letterSpacing: textPathAttrs.letterSpacing,
             orgText: textPathAttrs.orgText
           })
-
-          // Set attributes for Label from TextSvg
-          this.referShape.node.setAttrs({
-            scaleX: scale.x,
-            scaleY: scale.y,
-            rotation: this.node.getAttr('rotation')
-          })
         } catch (e) {
           console.log('Error:', e)
         }
+        this.syncPosition()
       }
     }
   }
@@ -353,7 +346,6 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
   private sync(e: Konva.KonvaEventObject<MouseEvent>) {
     this._syncAttrs()
     this.updateTransformer()
-    this.syncPosition()
   }
 
   /**
@@ -362,15 +354,18 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    * @private
    */
   private transformend(e: Konva.KonvaEventObject<MouseEvent>) {
-    this._syncAttrs()
+    if (this.referShape && !this.referShape.isVisible) {
+      this.referShape.node.setAttrs({
+        scaleX: this.node.getAbsoluteScale().x,
+        scaleY: this.node.getAbsoluteScale().y
+      })
+    }
     this.updateTransformer()
-    this.syncPosition()
   }
 
   private textChange(e: Konva.KonvaEventObject<MouseEvent>) {
     this._syncAttrs()
     this.updateTransformer()
-    this.syncPosition()
   }
 
   private dragendChange(e: Konva.KonvaEventObject<MouseEvent>) {
@@ -381,7 +376,6 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     this.referShape.node.setAttrs({
       rotation: this.node.getAttr('rotation')
     })
-    this.syncPosition()
   }
 
   private tagFillChange(e: Konva.KonvaEventObject<MouseEvent>) {
@@ -402,9 +396,9 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
 
   /**
    * Sync position between shapes
-   * @private
+   * @public
    */
-  private syncPosition() {
+  public syncPosition() {
     const rect = this.node.getClientRect()
     const refRect = this.referShape.node.getClientRect()
     const refAttr = this.referShape.node.attrs
