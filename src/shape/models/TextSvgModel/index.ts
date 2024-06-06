@@ -398,22 +398,24 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    * @public
    */
   public syncPosition() {
-    const rect = this.node.getClientRect()
-    const refRect = this.referShape.node.getClientRect()
-    const refAttr = this.referShape.node.attrs
+    if (this.referShape && !this.referShape.isVisible) {
+      const rect = this.node.getClientRect()
+      const refRect = this.referShape.node.getClientRect()
+      const refAttr = this.referShape.node.attrs
 
-    const center = {
-      x: rect.x + rect.width / 2,
-      y: rect.y + rect.height / 2
+      const center = {
+        x: rect.x + rect.width / 2,
+        y: rect.y + rect.height / 2
+      }
+
+      const deltaX = Math.abs(refAttr.x - refRect.x)
+      const deltaY = Math.abs(refAttr.y - refRect.y)
+
+      this.referShape.node.setAttrs({
+        x: center.x - (refRect.width / 2 - deltaX),
+        y: center.y - (refRect.height / 2 - deltaY)
+      })
     }
-
-    const deltaX = Math.abs(refAttr.x - refRect.x)
-    const deltaY = Math.abs(refAttr.y - refRect.y)
-
-    this.referShape.node.setAttrs({
-      x: center.x - (refRect.width / 2 - deltaX),
-      y: center.y - (refRect.height / 2 - deltaY)
-    })
   }
 
   /**

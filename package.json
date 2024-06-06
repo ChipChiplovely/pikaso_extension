@@ -1,6 +1,6 @@
 {
   "name": "pikaso_extension",
-  "version": "1.0.29",
+  "version": "1.0.30",
   "description": "Seamless, Fully-typed and Fully-tested HTML5 Canvas Library",
   "author": "Ramin Mousavi <ramin@pikaso.app> (http://github.com/raminious)",
   "license": "MIT",
@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "deepmerge": "^4.3.1",
-    "konva": "^9.3.3",
+    "konva": "^9.3.11",
     "typescript": "^5.3.3"
   },
   "devDependencies": {
