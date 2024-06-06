@@ -1,12 +1,12 @@
 import Konva from 'konva'
 
-import { convertHtmlToText } from '../../../utils/html-to-text'
-import { Board } from '../../../Board'
-import { isBrowser, isNode } from '../../../utils/detect-environment'
-import { rotateAroundCenter } from '../../../utils/rotate-around-center'
-import { ShapeModel } from '../../ShapeModel'
-import { LabelModel } from '../LabelModel'
-import { DrawType, TextSvgConfig } from '../../../types'
+import {convertHtmlToText} from '../../../utils/html-to-text'
+import {Board} from '../../../Board'
+import {isBrowser, isNode} from '../../../utils/detect-environment'
+import {rotateAroundCenter} from '../../../utils/rotate-around-center'
+import {ShapeModel} from '../../ShapeModel'
+import {LabelModel} from '../LabelModel'
+import {DrawType, TextSvgConfig} from '../../../types'
 
 export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
   /**
@@ -23,6 +23,8 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     this.config = config
     node.on('dblclick', this.inlineEdit.bind(this))
     node.on('transformend', this.transformend.bind(this))
+    node.on('dragend', this.dragendChange.bind(this))
+    node.on('rotationChange', this.rotationChange.bind(this))
     node.find('TextPath')[0].on('dataChange', this.sync.bind(this))
     node.find('TextPath')[0].on('fontFamilyChange', this.sync.bind(this))
     node.find('TextPath')[0].on('fontSizeChange', this.sync.bind(this))
@@ -31,8 +33,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     node.find('TextPath')[0].on('alignChange', this.sync.bind(this))
     node.find('TextPath')[0].on('fillChange', this.sync.bind(this))
     node.find('Tag')[0].on('fillChange', this.tagFillChange.bind(this))
-    node.on('dragend', this.sync.bind(this))
-    this._sync()
+    this._syncAttrs()
   }
 
   /**
@@ -68,8 +69,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    * @param orgText
    */
   public setOrgText(orgText: string) {
-    this.updateText({ orgText: orgText, text: orgText })
-    console.log('SVG set orgText', orgText)
+    this.updateText({orgText: orgText, text: orgText})
   }
 
   /**
@@ -171,6 +171,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
       })
       if (this.referShape) {
         this.referShape.setOrgText(newText)
+        this.syncPosition()
       }
 
       // select node
@@ -294,11 +295,10 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     this.updateTransformer()
   }
 
-  private _sync() {
+  private _syncAttrs() {
     let textPath = this.textPathNode
     let tag = this.tagNode
     if (textPath && tag) {
-      const cRect = textPath.getClientRect()
       const sRect = textPath.getSelfRect()
       const textPathAttrs = textPath.getAttrs()
       const scale = this.node.getAbsoluteScale()
@@ -312,26 +312,22 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
       if (this.referShape && !this.referShape.isVisible) {
         try {
           // Sync Position for Label
-          const centerX = cRect.x + cRect.width / 2
-          const centerY = cRect.y + cRect.height / 2
           this.referShape.updateText({
             fontFamily: textPathAttrs.fontFamily,
             fontSize: textPathAttrs.fontSize,
             fontStyle: textPathAttrs.fontStyle,
             fill: textPathAttrs.fill,
             letterSpacing: textPathAttrs.letterSpacing,
-            rotation: textPathAttrs.rotation,
             orgText: textPathAttrs.orgText
           })
 
           // Set attributes for Label from TextSvg
-          let lRect = this.referShape.node.getClientRect()
           this.referShape.node.setAttrs({
-            x: centerX - lRect.width / 2,
-            y: centerY - lRect.height / 2,
             scaleX: scale.x,
-            scaleY: scale.y
+            scaleY: scale.y,
+            rotation: this.node.getAttr('rotation')
           })
+          this.syncPosition()
         } catch (e) {
           console.log('Error:', e)
         }
@@ -354,7 +350,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    * @private
    */
   private sync(e: Konva.KonvaEventObject<MouseEvent>) {
-    this._sync()
+    this._syncAttrs()
     this.updateTransformer()
   }
 
@@ -364,13 +360,23 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    * @private
    */
   private transformend(e: Konva.KonvaEventObject<MouseEvent>) {
-    this._sync()
+    this._syncAttrs()
     this.updateTransformer()
   }
 
   private textChange(e: Konva.KonvaEventObject<MouseEvent>) {
-    this._sync()
+    this._syncAttrs()
     this.updateTransformer()
+  }
+
+  private dragendChange(e: Konva.KonvaEventObject<MouseEvent>) {
+    this.syncPosition()
+  }
+
+  private rotationChange(e: Konva.KonvaEventObject<MouseEvent>) {
+    this.referShape.node.setAttrs({
+      rotation: this.node.getAttr('rotation')
+    })
   }
 
   private tagFillChange(e: Konva.KonvaEventObject<MouseEvent>) {
@@ -387,6 +393,29 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
         }
       }
     }
+  }
+
+  /**
+   * Sync position between shapes
+   * @private
+   */
+  private syncPosition() {
+    const rect = this.node.getClientRect()
+    const refRect = this.referShape.node.getClientRect()
+    const refAttr = this.referShape.node.attrs
+
+    const center = {
+      x: rect.x + rect.width / 2,
+      y: rect.y + rect.height / 2
+    }
+
+    const deltaX = Math.abs(refAttr.x - refRect.x)
+    const deltaY = Math.abs(refAttr.y - refRect.y)
+
+    this.referShape.node.setAttrs({
+      x: center.x - (refRect.width / 2 - deltaX),
+      y: center.y - (refRect.height / 2 - deltaY)
+    })
   }
 
   /**
