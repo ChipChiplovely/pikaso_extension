@@ -1,13 +1,13 @@
 import Konva from 'konva'
 
-import {convertHtmlToText} from '../../../utils/html-to-text'
+import { convertHtmlToText } from '../../../utils/html-to-text'
 
-import {Board} from '../../../Board'
-import {ShapeModel} from '../../ShapeModel'
-import {isBrowser, isNode} from '../../../utils/detect-environment'
-import {rotateAroundCenter} from '../../../utils/rotate-around-center'
-import {DrawType, LabelConfig} from '../../../types'
-import {TextSvgModel} from '../TextSvgModel'
+import { Board } from '../../../Board'
+import { ShapeModel } from '../../ShapeModel'
+import { isBrowser, isNode } from '../../../utils/detect-environment'
+import { rotateAroundCenter } from '../../../utils/rotate-around-center'
+import { DrawType, LabelConfig } from '../../../types'
+import { TextSvgModel } from '../TextSvgModel'
 
 export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
   /**
@@ -37,7 +37,6 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     node.getText().on('fontSizeChange', this.sync.bind(this))
     node.getText().on('letterSpacingChange', this.sync.bind(this))
     node.getText().on('textChange', this.textChange.bind(this))
-
   }
 
   /**
@@ -275,6 +274,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     })
 
     this.updateTransformer()
+    this.syncPosition()
 
     this.board.events.emit('label:update-text', {
       shapes: [this],
@@ -364,6 +364,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
   private textChange(e: Konva.KonvaEventObject<MouseEvent>) {
     this._syncAttrs()
     this.updateTransformer()
+    this.syncPosition()
   }
 
   private tagFillChange(e: Konva.KonvaEventObject<MouseEvent>) {
@@ -386,7 +387,6 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     let text = this.textNode
     let tag = this.tagNode
     if (text && tag) {
-      const cRect = text.getClientRect()
       const textAttrs = text.getAttrs()
       const scale = this.node.getAbsoluteScale()
 
@@ -423,6 +423,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     this.referShape.node.setAttrs({
       rotation: this.node.getAttr('rotation')
     })
+    this.syncPosition()
   }
 
   /**
