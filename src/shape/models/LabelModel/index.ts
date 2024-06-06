@@ -431,6 +431,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     this.referShape.node.setAttrs({
       rotation: this.node.getAttr('rotation')
     })
+    this.syncPosition()
   }
 
   /**
