@@ -302,7 +302,6 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     if (textPath && tag) {
       const sRect = textPath.getSelfRect()
       const textPathAttrs = textPath.getAttrs()
-      const scale = this.node.getAbsoluteScale()
       tag.setAttrs({
         x: sRect.x,
         y: sRect.y,
