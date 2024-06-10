@@ -23,8 +23,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     this.config = config
     node.on('dblclick', this.inlineEdit.bind(this))
     node.on('transformend', this.transformend.bind(this))
-    node.on('dragend', this.dragendChange.bind(this))
-    node.on('rotationChange', this.rotationChange.bind(this))
+    node.on('dragend', this.dragend.bind(this))
     node.find('TextPath')[0].on('dataChange', this.sync.bind(this))
     node.find('TextPath')[0].on('fontFamilyChange', this.sync.bind(this))
     node.find('TextPath')[0].on('fontSizeChange', this.sync.bind(this))
@@ -271,7 +270,6 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     this.updateText({
       fontSize: Math.ceil(fontSize / scale.x)
     })
-    this.syncPosition()
   }
 
   /**
@@ -325,7 +323,6 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
         } catch (e) {
           console.log('Error:', e)
         }
-        this.syncPosition()
       }
     }
   }
@@ -361,6 +358,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
         scaleY: this.node.getAbsoluteScale().y
       })
     }
+    this.syncPosition()
     this.updateTransformer()
   }
 
@@ -369,14 +367,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     this.updateTransformer()
   }
 
-  private dragendChange(e: Konva.KonvaEventObject<MouseEvent>) {
-    this.syncPosition()
-  }
-
-  private rotationChange(e: Konva.KonvaEventObject<MouseEvent>) {
-    this.referShape.node.setAttrs({
-      rotation: this.node.getAttr('rotation')
-    })
+  private dragend(e: Konva.KonvaEventObject<MouseEvent>) {
     this.syncPosition()
   }
 

@@ -31,8 +31,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     node.on('transform', this.transform.bind(this))
     node.on('transformend', this.transformend.bind(this))
     node.on('dblclick', this.inlineEdit.bind(this))
-    node.on('rotationChange', this.rotationChange.bind(this))
-    node.on('dragend', this.syncPosition.bind(this))
+    node.on('dragend', this.dragend.bind(this))
     node.getTag().on('fillChange', this.tagFillChange.bind(this))
     node.getText().on('fontFamilyChange', this.sync.bind(this))
     node.getText().on('fontSizeChange', this.sync.bind(this))
@@ -157,6 +156,17 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
         scaleY: this.node.getAbsoluteScale().y
       })
     }
+    this.syncPosition()
+    this.updateTransformer()
+  }
+
+  /**
+   * Sync fontsize after changing every thing
+   * @param e
+   * @private
+   */
+  private dragend(e: Konva.KonvaEventObject<MouseEvent>) {
+    this.syncPosition()
     this.updateTransformer()
   }
 
@@ -418,23 +428,11 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
           this.referShape.node.setAttrs({
             rotation: this.node.getAttr('rotation')
           })
-          this.syncPosition()
         } catch (e) {
           console.log('Error:', e)
         }
       }
     }
-  }
-
-  /**
-   * Sync position between shapes
-   * @private
-   */
-  private rotationChange(e: Konva.KonvaEventObject<MouseEvent>) {
-    this.referShape.node.setAttrs({
-      rotation: this.node.getAttr('rotation')
-    })
-    this.syncPosition()
   }
 
   /**
