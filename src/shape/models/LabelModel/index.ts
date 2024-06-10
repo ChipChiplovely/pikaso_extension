@@ -188,7 +188,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     if (isNode() || this.node.isCached()) {
       return
     }
-    this.board.events.emit('textSvg:dblclick', {
+    this.board.events.emit('label:dblclick', {
       shapes: [this]
     })
 
@@ -197,7 +197,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     this.board.setActiveDrawing(DrawType.Text)
 
     // const position = e.target.absolutePosition()
-    const textBeforeEdit = this.textNode.getAttr('text')
+    // const textBeforeEdit = this.textNode.getAttr('text')
 
     // hide node
     // this.node.hide()
