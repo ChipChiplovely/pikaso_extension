@@ -105,7 +105,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
    * @param attributes The list of attributes
    */
   public updateTag(attributes: Partial<Konva.TagConfig>) {
-    this.board.history.create(this.board.layer, this.tagNode)
+    // this.board.history.create(this.board.layer, this.tagNode)
     this.tagNode.setAttrs(attributes)
   }
 
@@ -115,7 +115,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
    * @param attributes The list of attributes
    */
   public updateText(attributes: Partial<Konva.TextConfig>) {
-    this.board.history.create(this.board.layer, this.textNode)
+    // this.board.history.create(this.board.layer, this.textNode)
     this.textNode.setAttrs(attributes)
 
     this.updateTransformer()
@@ -179,6 +179,9 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     if (isNode() || this.node.isCached()) {
       return
     }
+    this.board.events.emit('textSvg:dblclick', {
+      shapes: [this]
+    })
 
     e.cancelBubble = true
     this.isEditingEnabled = true
@@ -248,12 +251,12 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
       this.board.setActiveDrawing(null)
 
       const newText = convertHtmlToText((<HTMLSpanElement>e.target).innerHTML)
-      if (newText !== textBeforeEdit) {
-        this.board.history.create(this.board.layer, [], {
-          undo: () => this.changeText(textBeforeEdit),
-          redo: () => this.changeText(newText)
-        })
-      }
+      // if (newText !== textBeforeEdit) {
+      //   this.board.history.create(this.board.layer, [], {
+      //     undo: () => this.changeText(textBeforeEdit),
+      //     redo: () => this.changeText(newText)
+      //   })
+      // }
 
       // update label's text
       this.textNode.setAttrs({

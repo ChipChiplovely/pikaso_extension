@@ -94,7 +94,9 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     if (isNode() || this.node.isCached()) {
       return
     }
-
+    this.board.events.emit('textSvg:dblclick', {
+      shapes: [this]
+    })
     e.cancelBubble = true
     this.board.setActiveDrawing(DrawType.TextPath)
 
@@ -154,12 +156,12 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
 
       const newText = convertHtmlToText((<HTMLSpanElement>e.target).innerHTML)
 
-      if (newText !== textBeforeEdit) {
-        this.board.history.create(this.board.layer, [], {
-          undo: () => this.changeText(textBeforeEdit),
-          redo: () => this.changeText(newText)
-        })
-      }
+      // if (newText !== textBeforeEdit) {
+      //   this.board.history.create(this.board.layer, [], {
+      //     undo: () => this.changeText(textBeforeEdit),
+      //     redo: () => this.changeText(newText)
+      //   })
+      // }
 
       // update label's text
       // this.node.text(newText)
@@ -185,7 +187,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    * @param value The text value
    */
   private changeText(value: string) {
-    this.board.events.emit('textPath:update-text', {
+    this.board.events.emit('textSvg:update-text', {
       shapes: [this],
       data: {
         text: value
@@ -228,7 +230,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     // const key = e.key.toLowerCase()
     // @ts-ignore
     const newText = convertHtmlToText((<HTMLSpanElement>e.target).innerHTML)
-    this.board.events.emit('textPath:update-text', {
+    this.board.events.emit('textSvg:update-text', {
       shapes: [this],
       data: {
         text: newText
@@ -278,7 +280,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    */
   // eslint-disable-next-line @typescript-eslint/member-ordering
   public updateText(attributes: Partial<Konva.TextPathConfig>) {
-    this.board.history.create(this.board.layer, this.textPathNode)
+    // this.board.history.create(this.board.layer, this.textPathNode)
     this.textPathNode.setAttrs(attributes)
     this.updateTransformer()
     this.syncPosition()
@@ -290,7 +292,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    */
   // eslint-disable-next-line @typescript-eslint/member-ordering
   public updateTag(attributes: Partial<Konva.TagConfig>) {
-    this.board.history.create(this.board.layer, this.tagNode)
+    // this.board.history.create(this.board.layer, this.tagNode)
     this.tagNode.setAttrs(attributes)
 
     this.updateTransformer()
