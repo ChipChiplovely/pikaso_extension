@@ -69,7 +69,6 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
    */
   public setOrgText(orgText: string) {
     this.updateText({ orgText: orgText, text: orgText })
-    this.syncPosition()
   }
 
   /**
@@ -281,7 +280,6 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     // this.board.history.create(this.board.layer, this.textPathNode)
     this.textPathNode.setAttrs(attributes)
     this.updateTransformer()
-    this.syncPosition()
   }
 
   /**

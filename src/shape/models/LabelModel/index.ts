@@ -83,7 +83,6 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     this.updateText({
       orgText: orgText
     })
-    this.syncPosition()
   }
 
   /**
