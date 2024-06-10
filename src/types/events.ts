@@ -27,6 +27,7 @@ export declare type EventListenerNames =
   | 'textPath:update-text'
   | 'textSvg:update-text'
   | 'textSvg:dblclick'
+  | 'textSvg:dblclickend'
   | 'flip:x'
   | 'flip:y'
   | 'history:undo'

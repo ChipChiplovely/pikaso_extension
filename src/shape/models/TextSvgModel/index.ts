@@ -98,7 +98,7 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
     e.cancelBubble = true
     this.board.setActiveDrawing(DrawType.TextPath)
 
-    const textBeforeEdit = this.textPathNode.getAttr('text')
+    // const textBeforeEdit = this.textPathNode.getAttr('text')
     // hide node
     // this.node.hide()
     this.textPathNode?.draggable(false)
@@ -176,6 +176,10 @@ export class TextSvgModel extends ShapeModel<Konva.Group, Konva.GroupConfig> {
 
       // select node
       this.board.selection.add(this)
+
+      this.board.events.emit('textSvg:dblclickend', {
+        shapes: [this]
+      })
     })
   }
 
