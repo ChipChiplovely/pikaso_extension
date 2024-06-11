@@ -23,6 +23,7 @@ export declare type EventListenerNames =
   | 'group:detach'
   | 'group:ungroup'
   | 'label:dblclick'
+  | 'label:dblclickend'
   | 'label:update-text'
   | 'textPath:update-text'
   | 'textSvg:update-text'

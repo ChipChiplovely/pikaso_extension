@@ -285,6 +285,10 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
 
       // select node
       this.board.selection.add(this)
+
+      this.board.events.emit('label:dblclickend', {
+        shapes: [this]
+      })
     })
   }
 
