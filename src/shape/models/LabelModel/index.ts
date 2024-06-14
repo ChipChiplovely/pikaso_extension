@@ -192,6 +192,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
    */
   private dragmove(e: Konva.KonvaEventObject<MouseEvent>) {
     this.syncReflectPosition()
+    this.updateTransformer()
   }
 
   /**
@@ -432,6 +433,9 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
           console.log('Error:', e)
         }
       }
+      if (this.reflectShape) {
+        this.reflection.reloadReflection()
+      }
     }
   }
 
@@ -459,6 +463,9 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
         } catch (e) {
           console.log('Error:', e)
         }
+      }
+      if (this.reflectShape) {
+        this.reflection.reloadReflection()
       }
     }
   }
@@ -508,14 +515,6 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
       this.reflectShape.config.history = false
       this.reflectShape.config.internal = false
       this.reflectShape.config.selectable = false
-      // this.reflectShape.config.transformer = {
-      //   resizeEnabled: false,
-      //   rotateEnabled: false,
-      //   rotateLineVisible: false,
-      //   useSingleNodeRotation: false,
-      //   borderEnabled: false,
-      //   anchorSize: 0
-      // }
     }
   }
 
@@ -563,7 +562,7 @@ export class LabelModel extends ShapeModel<Konva.Label, Konva.LabelConfig> {
     this.reflectShape.node.setZIndex(0)
     this.reflectShape.deselect()
     this.reflection = new Reflect(this, reflectShape)
-    this.reflection.createReflection()
+    this.reflection.reloadReflection()
   }
 
   /**

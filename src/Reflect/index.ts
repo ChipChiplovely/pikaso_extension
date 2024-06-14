@@ -1,7 +1,7 @@
 import Konva from 'konva'
 
-import { ShapeModel } from '../shape/ShapeModel'
-import { ImageModel } from '../shape/models/ImageModel'
+import {ShapeModel} from '../shape/ShapeModel'
+import {ImageModel} from '../shape/models/ImageModel'
 
 export interface ReflectConfig {
   isReflect: boolean
@@ -48,18 +48,29 @@ export class Reflect {
     ctx.restore()
   }
 
-  public createReflection() {
+  public reloadReflection() {
     if (this.config.isReflect) {
       this.reflectImage.show()
       const theta = this.shape.node.rotation()
       this.shape.rotate(0)
       this.shape.node.toImage().then(img => {
-        this.reflectImage.update({
-          x: this.shape.node.x(),
-          y: this.shape.node.y(),
-          width: this.shape.width(),
-          height: this.shape.height()
-        })
+        if (this.shape.type === 'textSvg') {
+          const rect = this.shape.node.getClientRect()
+          this.reflectImage.node.setAttrs({
+            x: rect.x,
+            y: rect.y,
+            width: rect.width,
+            height: rect.height
+          })
+        } else {
+          this.reflectImage.node.setAttrs({
+            x: this.shape.node.x(),
+            y: this.shape.node.y(),
+            width: this.shape.node.width(),
+            height: this.shape.node.height()
+          })
+        }
+
         this.reflectImage.node.clearCache()
         this.reflectImage.node.setAttr('image', img)
         this.reflectImage.node.sceneFunc((ctx, shape) => {
@@ -72,8 +83,13 @@ export class Reflect {
     }
   }
 
-  public updateReflection(config: ReflectConfig) {
-    this.shape.node.attrs.reflection = config
-    this.createReflection()
+  /**
+   * Update config
+   * @param config
+   */
+  public updateConfig(config: ReflectConfig) {
+    this.config = { ...config }
+    this.shape.node.attrs.reflection = this.config
+    this.reloadReflection()
   }
 }
